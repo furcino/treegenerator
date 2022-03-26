@@ -17,6 +17,7 @@ import java.util.UUID;
 public class App extends SimpleApplication {
 
     long lastCheckTime = 0;
+
     public static void main(String[] args) {
 
         App app = new App();
@@ -32,13 +33,12 @@ public class App extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         createBranches(0, new BranchInfo());
-        rootNode.rotate((float) Math.PI/2, 0, 0);
-
+        rootNode.rotate(-(float) FastMath.PI/2, 0, 0);
     }
 
     @Override
     public void simpleUpdate(float tpf) {
-        if ((timer.getTime() - lastCheckTime) > 10_000_000_000L) {
+        if ((timer.getTime() - lastCheckTime) > 5_000_000_000L) {
             lastCheckTime = timer.getTime();
             rootNode.detachAllChildren();
             createBranches(0, new BranchInfo());
@@ -49,8 +49,8 @@ public class App extends SimpleApplication {
 
     private void createBranches(int level, BranchInfo info) {
         // set length and radius for cylinder
-        float length = 0.6f - level * 0.06f;
-        float radius = 0.03f - level * 0.004f;
+        float length = 0.6f - (level * 0.06f);
+        float radius = 0.03f - (level * 0.004f);
 
         // create cylinder
         Cylinder cylinder = new Cylinder(10, 10, radius, length, true);
@@ -64,32 +64,31 @@ public class App extends SimpleApplication {
         node.attachChild(geom);
         rootNode.attachChild(node);
         // cylinder has pivot in center, moving cylinder so that pivot will be at the bottom end
-        geom.setLocalTranslation(0 , 0, -length/2);
+        geom.setLocalTranslation(0 , 0, length/2);
         // move and rotate branch
         node.attachChild(geom);
-        node.setLocalTranslation(info.positionX, info.positionY, info.positionZ);
         node.rotate(info.rotationX, info.rotationY, 0);
+        node.setLocalTranslation(info.positionX, info.positionY, info.positionZ);
 
         // generate random rotation values (only two are needed)
-        float rotationX = (float)  (Math.random()-0.5* FastMath.PI/2);
-        float rotationY = (float) (Math.random()-0.5* FastMath.PI/2);
+        float rotationX = (float)  ((Math.random()-0.5) * FastMath.PI/2);
+        float rotationY = (float) ((Math.random()-0.5) * FastMath.PI/2);
 
         // calculate new rotation
-        float nextX = (float) -(Math.sin(info.rotationY) * length);
-        float nextY = (float) (Math.sin(info.rotationX) * length);
-        float nextZ = (float) -(Math.cos(info.rotationY) * Math.cos(info.rotationX) * length);
+        float nextX = (float) (Math.sin(info.rotationY) * (length * Math.cos(info.rotationX)));
+        float nextY = -(float) (Math.sin(info.rotationX) * length);
+        float nextZ = (FastMath.cos(info.rotationY) * FastMath.cos(info.rotationX) * length);
 
         // create new branch info
         BranchInfo newInfo = new BranchInfo();
-        newInfo.rotationX = FastMath.abs(info.rotationX + rotationX) < FastMath.PI/2 ? info.rotationX + rotationX : info.rotationX;
-        newInfo.rotationY = FastMath.abs(info.rotationY + rotationY) < FastMath.PI/2 ? info.rotationY + rotationY : info.rotationY;
+        newInfo.rotationX = info.rotationX + rotationX;
+        newInfo.rotationY = info.rotationY + rotationY;
         newInfo.positionX = info.positionX + nextX;
         newInfo.positionY = info.positionY + nextY;
         newInfo.positionZ = info.positionZ + nextZ;
 
         if (level < 6) {
             level++;
-            createBranches(level, newInfo);
 
             BranchInfo info1 = new BranchInfo(newInfo);
             info1.rotationX = -newInfo.rotationX;
